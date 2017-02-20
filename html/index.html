@@ -7,20 +7,90 @@
     <script type="text/javascript" src="../js/application.js"></script>
     <script type="text/javascript" src="../js/jcanvas.min.js"></script>
 
+    <style type="text/css">
+        #colorMapCanvas {
+            width: 100%;
+            height: 100%;
+            margin-top: 50px;
+
+            background: red;
+        }
+    </style>
+
 </head>
 <body>
-<form>
+<video id="videoTag" controls></video>
+
+<form id="inputForm">
     <label for="inputVideo" title="Choose an Video">Choose a video</label>
-    <input id="inputVideo" type="file">
+    <input id="inputVideo" type="file" accept="video/*">
+    <button type="submit">OK</button>
 </form>
 
 
-<canvas id="colorMapCanvas" height="100%" style="background:red"></canvas>
+<canvas id="colorMapCanvas"></canvas>
 
 <script type="text/javascript">
+    var colorMapCanvas = $('#colorMapCanvas');
+    var inputForm = $('#inputForm');
+    var inputVideo = document.querySelector('input');
+    var videoTag = document.querySelector('video');
+    var URL = window.URL || window.webkitURL;
+    var interval = 10; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
+
     $(document).ready(function() {
 
+
+
     });
+
+    /**
+     *  Nachdem ein Video ausgewählt wurde, wird dem <video/>-Element das Video zugewiesen;
+     *  Zu beachten ist hierbei, dass die URL zum Abspielen des Videos eine lokale URL ist
+     *  und somit muss man mittels Web-API  URL.createObjectURL() eine Url erzeugen die auf die lokale Datei zeigt.
+     *  (Sonst könnte man via Script jede beliebige Datei im Dateisystem des Clients laden).
+     */
+    inputForm.on('submit', function(event) {
+        event.preventDefault();
+        console.log("Los");
+
+        var videoFile = inputVideo.files[0];
+        var videoType = videoFile.type;
+        var canPlay = videoTag.canPlayType(videoType);
+
+
+        if (canPlay === '') {
+            alert('Unable to play Video. Supported file formats are: MP4, OGG, MebM');
+            return;
+        } else {
+            videoTag.src = URL.createObjectURL(videoFile);
+
+            //In Webkit Browsern werden Metadaten nach dem Video geladen, daher muss man zusätzlich den readyState abfragen
+            var intervalID = setInterval(function(){
+                if (videoTag.readyState > 0) {
+                    clearInterval(intervalID);
+                    //Mit der Erzeugung der ColorMap beginnen
+                    doMagicStuff();
+                }
+            }, 200);
+        }
+    });
+
+    function doMagicStuff() {
+        var duration = parseInt(videoTag.duration);
+        var frameAt = interval;
+
+        /**
+         * Alle interval-Sekunden einen Frame aus dem Video bearbeiten
+         */
+        while (frameAt <= duration) {
+            videoTag.currentTime = frameAt;
+
+            frameAt = frameAt + interval;
+        }
+
+    }
+
 </script>
 </body>
 </html>
