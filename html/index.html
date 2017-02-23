@@ -37,24 +37,18 @@
 </div>
 <script type="text/javascript">
     var inputForm = $('#inputForm');
+    var colorMap = $('#colorMap');
     var inputVideo = document.querySelector('input');
-
     var videoTag = document.querySelector('video');
+
     var videoWidth;
     var videoHeight;
+    var targetHeight = 200;
 
     var URL = window.URL || window.webkitURL;
-    var interval = 20; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
+    var interval = 10; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
     var duration; // Länge des Videos
-    var colorMap = $('#colorMap');
 
-
-
-    $(document).ready(function() {
-
-
-
-    });
 
     /**
      *  Nachdem ein Video ausgewählt wurde, wird dem <video/>-Element das Video zugewiesen;
@@ -93,29 +87,22 @@
         duration = parseInt(videoTag.duration);
         var frameAt = interval;
 
-        //Wenn der sich der Frame ändert, wird er extrahiert und bearbeitet
+        //Wenn sich der Frame ändert, wird er extrahiert,
         videoTag.addEventListener('seeked', function () {
 //            var imageCanvas = document.getElementById('hiddenCanvas').cloneNode(true);
             var imageCanvas = document.createElement('canvas');
             var context = imageCanvas.getContext('2d');
+            var scaleFactor = targetHeight/videoHeight;
 
-            imageCanvas.height = videoHeight;
-            imageCanvas.width = videoHeight;
+            imageCanvas.height = videoHeight * scaleFactor;
+            imageCanvas.width = videoHeight * scaleFactor;
             imageCanvas.id = 'image' + frameAt;
 
 //            Video wird zugeschnitten
-            context.drawImage(videoTag, (videoWidth - videoHeight)/2, 0, (videoWidth - videoHeight)/2, videoHeight, 0, 0, videoHeight, videoHeight);
-//            context.drawImage(videoTag, 320, 0, 320, 180, 0, 0, 640, 360)
-
-
-//            debugger;
-//            context.clearRect(0,0, imageCanvas.width, imageCanvas.width);
-//
-//            context.scale(300/videoTag.videoWidth,300/videoTag.videoHeight);
+            context.drawImage(videoTag, (videoWidth - videoHeight)/2, 0, (videoWidth - videoHeight)/2, videoHeight, 0, 0, videoHeight * scaleFactor, videoHeight * scaleFactor);
 
 
             frameAt = frameAt + interval;
-
 
             colorMap.append(imageCanvas);
             imageCanvas.removeAttribute('hidden');
