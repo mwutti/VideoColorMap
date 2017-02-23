@@ -13,7 +13,6 @@
             height: 100%;
             margin-top: 50px;
 
-            background: red;
         }
     </style>
 
@@ -27,16 +26,19 @@
     <button type="submit">OK</button>
 </form>
 
+<div id="colorMap">
 
-<canvas id="colorMapCanvas"></canvas>
-
+</div>
 <script type="text/javascript">
-    var colorMapCanvas = $('#colorMapCanvas');
     var inputForm = $('#inputForm');
     var inputVideo = document.querySelector('input');
     var videoTag = document.querySelector('video');
     var URL = window.URL || window.webkitURL;
-    var interval = 10; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
+    var interval = 20; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
+    var duration; // Länge des Videos
+    var colorMap = $('#colorMap');
+
+
 
     $(document).ready(function() {
 
@@ -52,7 +54,6 @@
      */
     inputForm.on('submit', function(event) {
         event.preventDefault();
-        console.log("Los");
 
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
@@ -65,10 +66,10 @@
         } else {
             videoTag.src = URL.createObjectURL(videoFile);
 
-            //In Webkit Browsern werden Metadaten nach dem Video geladen, daher muss man zusätzlich den readyState abfragen
             var intervalID = setInterval(function(){
                 if (videoTag.readyState > 0) {
                     clearInterval(intervalID);
+
                     //Mit der Erzeugung der ColorMap beginnen
                     doMagicStuff();
                 }
@@ -77,19 +78,29 @@
     });
 
     function doMagicStuff() {
-        var duration = parseInt(videoTag.duration);
+        duration = parseInt(videoTag.duration);
         var frameAt = interval;
 
-        /**
-         * Alle interval-Sekunden einen Frame aus dem Video bearbeiten
-         */
-        while (frameAt <= duration) {
-            videoTag.currentTime = frameAt;
+        videoTag.addEventListener('seeked', function () {
+            var imageCanvas = document.createElement('canvas');
+            imageCanvas.id = 'image' + frameAt;
+
+            imageCanvas.width = videoTag.videoWidth;
+            imageCanvas.height = videoTag.videoHeight;
+
+
+            imageCanvas.getContext('2d').clearRect(0,0, imageCanvas.width, imageCanvas.width);
+            imageCanvas.getContext('2d').drawImage(videoTag,0,0,videoTag.videoWidth, videoTag.videoHeight);
 
             frameAt = frameAt + interval;
-        }
+            colorMap.append(imageCanvas);
+
+            videoTag.currentTime = frameAt;
+        });
+        videoTag.currentTime = frameAt;
 
     }
+
 
 </script>
 </body>
