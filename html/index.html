@@ -66,8 +66,8 @@
         event.preventDefault();
 
         //todo Number of dominantColors and colorThief
-        nrOfDominantColors = 1;
-//        useColorThief = true;
+        nrOfDominantColors = 64;
+        useColorThief = true;
 
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
@@ -113,30 +113,37 @@
 
             context.drawImage(videoTag, 0, 0);
 
-            var dominantColor = getDominantColor(imageCanvas, nrOfDominantColors);
-            if (nrOfDominantColors > 1) {
-                //Hier wird auf Basis des Abstandes zu den dominantesten Farben noch einmal die Dominante Farbe berechnet
-                if (useColorThief) {
-                    var colorThief = new ColorThief();
+            /**
+             * Entweder wird auf Basis einer Farbpalette von ColorThief die DominanteFarbe berechnet
+             */
+            if (useColorThief) {
+                var colorThief = new ColorThief();
 
-                    var colorPalleteFromColorThief = colorThief.getPalette(imageCanvas, nrOfDominantColors);
-                    var colorPalleteForDominantColor = [];
-                    $.each(colorPalleteFromColorThief, function(index, value) {
-                        var colorHex = rgbToHex(value[0], value[1], value[2]);
-                        colorPalleteForDominantColor.push(colorHex);
-                    });
+                var colorPalleteFromColorThief = colorThief.getPalette(imageCanvas, nrOfDominantColors);
+                var colorPalleteForDominantColor = [];
+                $.each(colorPalleteFromColorThief, function(index, value) {
+                    var colorHex = rgbToHex(value[0], value[1], value[2]);
+                    colorPalleteForDominantColor.push(colorHex);
+                });
 
-                    dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalleteForDominantColor)[0];
-                } else {
-                    var colorPalette = [];
-                    $.each(dominantColor, function() {
-                        colorPalette.push(this[0]);
-                    });
+                dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalleteForDominantColor)[0];
+            } else if (nrOfDominantColors > 1){
+                /**
+                 * Oder es wird ein erweiterter Algorithmus verwendet
+                 */
+                var dominantColor = getDominantColor(imageCanvas, nrOfDominantColors);
 
-                    dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalette)[0];
-                }
+                var colorPalette = [];
+                $.each(dominantColor, function() {
+                    colorPalette.push(this[0]);
+                });
 
-
+                dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalette)[0];
+            } else {
+                /**
+                 * Oder der einfache Algorithmus
+                 */
+                var dominantColor = getDominantColor(imageCanvas, nrOfDominantColors);
             }
 
             if (imageMap[dominantColor] == undefined) {
