@@ -3,43 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <title>Video Color Map</title>
+    <!--JQuery-->
     <script type="text/javascript" src="../js/jquery-3.1.1.js"></script>
-    <script type="text/javascript" src="../js/application.js"></script>
-    <script type="text/javascript" src="../js/jcanvas.min.js"></script>
+    <!--ColorThief-->
     <script type="text/javascript" src="../js/color-thief.min.js"></script>
 
-    <style type="text/css">
-        #colorMapCanvas {
-            width: 100%;
-            height: 100%;
-            margin-top: 50px;
+    <!--Bootstrap css and js-->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script type="text/javascript" src="../js/bootstrap-slider.min.js"></script>
+    <!--Applikationsspezifisches Javascript-->
+    <script type="text/javascript" src="../js/application.js"></script>
+    <script type="text/javascript" src="../js/application-frontend.js"></script>
 
+    <style type="text/css">
+        canvas {
+            width: 500px;
+            height : auto;
+
+        }
+
+        #intervall-slider .slider-selection {
+            background: #BABABA;
         }
     </style>
 
+    <link rel="stylesheet" href="../css/bootstrap-slider.css">
+
 </head>
 <body>
-<video id="videoTag" controls></video>
+<video id="videoTag" hidden></video>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                DominantColorMap
+            </a>
+        </div>
+    </div>
+</nav>
 
-<form id="inputForm">
-    <label for="inputVideo" title="Choose an Video">Choose a video</label>
-    <input id="inputVideo" type="file" accept="video/*">
-    <button type="submit">OK</button>
-</form>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1 class="text-center">Dominant Color Map</h1>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-7 col-md-offset-2">
+            <h2>First Select</h2>
+        </div>
+        <div class="col-md-7 col-md-offset-2">
+            <label for="interval">Interval in seconds between to frames</label>
+            <input id="interval" data-slider-id='intervall-slider' type="text" data-slider-min="1" data-slider-max="20" data-slider-step="1" data-slider-value="10"/>
+        </div>
+        <div class="col-md-7 col-md-offset-2">
+            <label for="cropped">Should the images be cropped to squares ?</label>
+            <input id=cropped type="checkbox" >
+        </div>
+        <div class="col-md-7 col-md-offset-2">
+            <label>Choose an algorithm</label>
+            <div class="radio">
+                <label><input type="radio" checked name="optradio">Dominant Color (simple)</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="optradio">Dominant Color (advanced)</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="optradio">Dominant Color Based on ColorThief Color Palette</label>
+            </div>
+        </div>
+        <div class="col-md-7 col-md-offset-2">
+            <h2>Now choose an image</h2>
+        </div>
+        <div class="col-md-7 col-md-offset-2">
+            <form id="inputForm">
+                <input id="inputVideo" type="file" accept="video/*"> <br>
+                <button type="submit" class="btn btn-primary">Create Color Map</button>
+            </form>
+        </div>
 
-<div id="colorMap">
-    <canvas
-            id="hiddenCanvas"
-            height="360"
-            width="640"
-            style="width: 320px; height: 180px; border: 1px solid black;"
-            hidden>
-    </canvas>
+    </div>
 </div>
+
+<div class="container-fluid">
+    <div id="colorMap">
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div id="dominantColorMap">
+    </div>
+</div>
+
 <script type="text/javascript">
     var inputForm = $('#inputForm');
     var colorMap = $('#colorMap');
-    var inputVideo = document.querySelector('input');
+    var dominantColorMap = $('#dominantColorMap');
+    var inputVideo = document.querySelector('#inputVideo');
     var videoTag = document.querySelector('video');
 
     var videoWidth;
@@ -64,10 +127,10 @@
      */
     inputForm.on('submit', function(event) {
         event.preventDefault();
-
+        debugger;
         //todo Number of dominantColors and colorThief
-        nrOfDominantColors = 64;
-        useColorThief = true;
+        nrOfDominantColors = 5;
+        useColorThief = false;
 
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
@@ -151,26 +214,20 @@
             }
             imageMap[dominantColor].push(imageCanvas);
 
-//            var scaleFactor = targetHeight/videoHeight;
-//            imageCanvas.height = videoHeight * scaleFactor;
-//            imageCanvas.width = videoHeight * scaleFactor;
-//
-//
-//            //Video wird zugeschnitten
-//            context.drawImage(videoTag, (videoWidth - videoHeight)/2, 0, (videoWidth - videoHeight)/2, videoHeight, 0, 0, videoHeight * scaleFactor, videoHeight * scaleFactor);
-
-
+            //Nächster Frame ist dran
             frameAt = frameAt + interval;
-
-//            colorMap.append(imageCanvas);
-//            imageCanvas.removeAttribute('hidden');
-
-            //remove this
-            //appendDominantColor(dominantColor);
 
             if (frameAt <= duration) {
                 videoTag.currentTime = frameAt;
             } else {
+                //Frames skallieren
+                $.each(imageMap, function() {
+                    var context = this[0].getContext('2d');
+                    context.save();
+                    context.scale(0.5, 0.5);
+                    context.restore();
+                });
+
                 //Gibt das Zeichen, das alle dominanten Farben und Frames vorhanden sind
                 colorMap.trigger("ready");
             }
@@ -185,7 +242,7 @@
         var keys = [];
 
         $.each(imageMap, function(key, value) {
-          keys.push(key);
+            keys.push(key);
         });
 
         keys.sort();
@@ -194,6 +251,13 @@
         $.each(keys, function(index, value) {
             $.each(imageMap[value], function() {
                 colorMap.append(this);
+//                appendDominantColor(value);
+            })
+        })
+
+        $.each(keys, function(index, value) {
+            $.each(imageMap[value], function() {
+//                colorMap.append(this);
                 appendDominantColor(value);
             })
         })
@@ -270,8 +334,6 @@
 
         //Mit Downsampling
         for (var i = 0; i < imageData.length; i+=40) {
-            debugger;
-
             if (i % (videoWidth * 4) == 0) {
                 //Schutz vor Überlauf
                 if (i + videoWidth * 40 < imageData.length) {
@@ -342,15 +404,24 @@
 
     function appendDominantColor(dominantColor) {
         var colorcanvas = document.createElement('canvas');
-        colorcanvas.height = 100;
-        colorcanvas.width = 100;
+        colorcanvas.height = videoHeight;
+        colorcanvas.width = videoWidth;
 
         var context2d = colorcanvas.getContext('2d');
         context2d.fillStyle = '#' + dominantColor;
-        context2d.fillRect(0,0,100,100);
-        colorMap.append(colorcanvas);
+        context2d.fillRect(0,0,videoWidth,videoHeight);
+        dominantColorMap.append(colorcanvas);
     }
 
+    $(document).ready(function() {
+        debugger;
+        $('#interval').slider({
+            formatter: function(value) {
+                return 'Current value: ' + value;
+            }
+        });
+    })
 </script>
+
 </body>
 </html>
