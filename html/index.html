@@ -27,12 +27,22 @@
 </form>
 
 <div id="colorMap">
-
+    <canvas
+            id="hiddenCanvas"
+            height="360"
+            width="640"
+            style="width: 320px; height: 180px; border: 1px solid black;"
+            hidden>
+    </canvas>
 </div>
 <script type="text/javascript">
     var inputForm = $('#inputForm');
     var inputVideo = document.querySelector('input');
+
     var videoTag = document.querySelector('video');
+    var videoWidth;
+    var videoHeight;
+
     var URL = window.URL || window.webkitURL;
     var interval = 20; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
     var duration; // Länge des Videos
@@ -69,6 +79,8 @@
             var intervalID = setInterval(function(){
                 if (videoTag.readyState > 0) {
                     clearInterval(intervalID);
+                    videoWidth = videoTag.videoWidth;
+                    videoHeight = videoTag.videoHeight;
 
                     //Mit der Erzeugung der ColorMap beginnen
                     doMagicStuff();
@@ -81,25 +93,40 @@
         duration = parseInt(videoTag.duration);
         var frameAt = interval;
 
+        //Wenn der sich der Frame ändert, wird er extrahiert und bearbeitet
         videoTag.addEventListener('seeked', function () {
+//            var imageCanvas = document.getElementById('hiddenCanvas').cloneNode(true);
             var imageCanvas = document.createElement('canvas');
+            var context = imageCanvas.getContext('2d');
+
+            imageCanvas.height = videoHeight;
+            imageCanvas.width = videoHeight;
             imageCanvas.id = 'image' + frameAt;
 
-            imageCanvas.width = videoTag.videoWidth;
-            imageCanvas.height = videoTag.videoHeight;
+//            Video wird zugeschnitten
+            context.drawImage(videoTag, (videoWidth - videoHeight)/2, 0, (videoWidth - videoHeight)/2, videoHeight, 0, 0, videoHeight, videoHeight);
+//            context.drawImage(videoTag, 320, 0, 320, 180, 0, 0, 640, 360)
 
 
-            imageCanvas.getContext('2d').clearRect(0,0, imageCanvas.width, imageCanvas.width);
-            imageCanvas.getContext('2d').drawImage(videoTag,0,0,videoTag.videoWidth, videoTag.videoHeight);
+//            debugger;
+//            context.clearRect(0,0, imageCanvas.width, imageCanvas.width);
+//
+//            context.scale(300/videoTag.videoWidth,300/videoTag.videoHeight);
+
 
             frameAt = frameAt + interval;
-            colorMap.append(imageCanvas);
 
-            videoTag.currentTime = frameAt;
+
+            colorMap.append(imageCanvas);
+            imageCanvas.removeAttribute('hidden');
+            if (frameAt <= duration) {
+                videoTag.currentTime = frameAt;
+            }
         });
         videoTag.currentTime = frameAt;
-
     }
+
+
 
 
 </script>
