@@ -87,33 +87,101 @@
         duration = parseInt(videoTag.duration);
         var frameAt = interval;
 
-        //Wenn sich der Frame ändert, wird er extrahiert,
+        /**
+         * Jedes mal wenn sich ein Frame im Video ändert, wird die Bearbeitung ausgeführt
+         **/
         videoTag.addEventListener('seeked', function () {
-//            var imageCanvas = document.getElementById('hiddenCanvas').cloneNode(true);
             var imageCanvas = document.createElement('canvas');
             var context = imageCanvas.getContext('2d');
-            var scaleFactor = targetHeight/videoHeight;
-
-            imageCanvas.height = videoHeight * scaleFactor;
-            imageCanvas.width = videoHeight * scaleFactor;
+            /**
+             * Zuerst wird ein Canvas Element erstellt, das die Originalgröße des Videos hat und  auf dessen Basis
+             * die dominante Farbe berechnet wird
+             */
+            imageCanvas.height = videoHeight;
+            imageCanvas.width = videoWidth;
             imageCanvas.id = 'image' + frameAt;
 
-//            Video wird zugeschnitten
-            context.drawImage(videoTag, (videoWidth - videoHeight)/2, 0, (videoWidth - videoHeight)/2, videoHeight, 0, 0, videoHeight * scaleFactor, videoHeight * scaleFactor);
+            context.drawImage(videoTag, 0, 0);
+
+            var dominantColor = getDominantColor(imageCanvas);
+
+//            var scaleFactor = targetHeight/videoHeight;
+//            imageCanvas.height = videoHeight * scaleFactor;
+//            imageCanvas.width = videoHeight * scaleFactor;
+//
+//
+//            //Video wird zugeschnitten
+//            context.drawImage(videoTag, (videoWidth - videoHeight)/2, 0, (videoWidth - videoHeight)/2, videoHeight, 0, 0, videoHeight * scaleFactor, videoHeight * scaleFactor);
 
 
             frameAt = frameAt + interval;
 
             colorMap.append(imageCanvas);
             imageCanvas.removeAttribute('hidden');
+
+            //remove this
+            var colorcanvas = document.createElement('canvas');
+            colorcanvas.height = 100;
+            colorcanvas.width = 100;
+
+            var context2d = colorcanvas.getContext('2d');
+            context2d.fillStyle = '#' + dominantColor;
+            context2d.fillRect(0,0,100,100);
+            colorMap.append(colorcanvas);
+
             if (frameAt <= duration) {
                 videoTag.currentTime = frameAt;
             }
         });
+
+        //Initialer Anstoß der Erzeugung zur ColorMap
         videoTag.currentTime = frameAt;
     }
 
+    function getDominantColor(canvas) {
+        var result;
+        var dictionary = {};
+        var context = canvas.getContext('2d');
+        var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
 
+        for (i = 0; i < imageData.length; i+=4) {
+            var red = imageData[i];
+            var green = imageData[i+1];
+            var blue = imageData[i+2];
+//            var alpha = imageData[i+3];
+
+            //integer rep
+//            var rgb = (red << 24) + (green << 16) + (blue << 8) + (alpha);
+            var rgb = rgbToHex(componentToHex(red), componentToHex(green), componentToHex(blue));
+
+            if (dictionary[rgb] == undefined) {
+                dictionary[rgb] = 1;
+            } else {
+                dictionary[rgb] = dictionary[rgb] + 1;
+            }
+        }
+
+        var max = 0;
+
+        $.each(dictionary, function(key, value) {
+            if (value > max) {
+                max = value;
+                result = key;
+            }
+        });
+
+        debugger;
+        return result;
+    }
+
+    function componentToHex(c) {
+        var hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(r, g, b) {
+        return componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
 
 
 </script>
