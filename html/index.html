@@ -66,7 +66,7 @@
         event.preventDefault();
 
         //todo Number of dominantColors and colorThief
-        nrOfDominantColors = 64;
+        nrOfDominantColors = 1;
 //        useColorThief = true;
 
         var videoFile = inputVideo.files[0];
@@ -115,10 +115,8 @@
 
             var dominantColor = getDominantColor(imageCanvas, nrOfDominantColors);
             if (nrOfDominantColors > 1) {
-                debugger;
                 //Hier wird auf Basis des Abstandes zu den dominantesten Farben noch einmal die Dominante Farbe berechnet
                 if (useColorThief) {
-                    debugger;
                     var colorThief = new ColorThief();
 
                     var colorPalleteFromColorThief = colorThief.getPalette(imageCanvas, nrOfDominantColors);
@@ -200,8 +198,15 @@
         var context = canvas.getContext('2d');
         var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
 
-        //1-dimensionales Donwsampling jeder 10. Pixel
-        for (i = 0; i < imageData.length; i+=40) {
+        //Downsampling jeder 10te pixel horizontal
+        for (var i = 0; i < imageData.length; i+=40) {
+            // Jeder 10te pixel vertikal
+            if (i % (videoWidth * 4) == 0) {
+                //Schutz vor Überlauf
+                if (i + videoWidth * 40 < imageData.length) {
+                    i = i + videoWidth * 40;
+                }
+            }
             var red = imageData[i];
             var green = imageData[i+1];
             var blue = imageData[i+2];
@@ -256,8 +261,17 @@
         var context = canvas.getContext('2d');
         var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
 
-        for (i = 0; i < imageData.length; i+=40) {
-            var distances = distancesToColorPalette(imageData, colorPalette);
+        //Mit Downsampling
+        for (var i = 0; i < imageData.length; i+=40) {
+            debugger;
+
+            if (i % (videoWidth * 4) == 0) {
+                //Schutz vor Überlauf
+                if (i + videoWidth * 40 < imageData.length) {
+                    i = i + videoWidth * 40;
+                }
+            }
+            var distances = distancesToColorPalette(imageData, colorPalette, i);
 
             var minimumDistance = 99999999999999999999;
             var minimumDistanceIndex;
@@ -283,7 +297,7 @@
         return sortedByValue[sortedByValue.length - 1];
     }
 
-    function distancesToColorPalette(imageData, colorPalette) {
+    function distancesToColorPalette(imageData, colorPalette, i) {
         var pixelRed = imageData[i];
         var pixelGreen = imageData[i+1];
         var pixelBlue = imageData[i+2];
