@@ -46,8 +46,11 @@
     var targetHeight = 200;
 
     var URL = window.URL || window.webkitURL;
-    var interval = 10; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
+    var interval = 20; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
     var duration; // Länge des Videos
+
+    // Eine Map die in der die einzelnen Frames {dominantColor, {canvas}} gespeichert werden.
+    var imageMap = {}
 
 
     /**
@@ -104,6 +107,11 @@
             context.drawImage(videoTag, 0, 0);
 
             var dominantColor = getDominantColor(imageCanvas);
+            debugger;
+            if (imageMap[dominantColor] == undefined) {
+                imageMap[dominantColor] = [];
+            }
+            imageMap[dominantColor].push(imageCanvas);
 
 //            var scaleFactor = targetHeight/videoHeight;
 //            imageCanvas.height = videoHeight * scaleFactor;
@@ -116,21 +124,17 @@
 
             frameAt = frameAt + interval;
 
-            colorMap.append(imageCanvas);
-            imageCanvas.removeAttribute('hidden');
+//            colorMap.append(imageCanvas);
+//            imageCanvas.removeAttribute('hidden');
 
             //remove this
-            var colorcanvas = document.createElement('canvas');
-            colorcanvas.height = 100;
-            colorcanvas.width = 100;
-
-            var context2d = colorcanvas.getContext('2d');
-            context2d.fillStyle = '#' + dominantColor;
-            context2d.fillRect(0,0,100,100);
-            colorMap.append(colorcanvas);
+            //appendDominantColor(dominantColor);
 
             if (frameAt <= duration) {
                 videoTag.currentTime = frameAt;
+            } else {
+                //Gibt das Zeichen, das alle dominanten Farben und Frames vorhanden sind
+                colorMap.trigger("ready");
             }
         });
 
@@ -138,13 +142,26 @@
         videoTag.currentTime = frameAt;
     }
 
+    colorMap.on('ready', function() {
+        //keys sortieren
+        var keys = [];
+
+        $.each(imageMap, function(key, value) {
+          keys.push(key);
+        });
+
+        keys.sort();
+
+
+    });
+
     function getDominantColor(canvas) {
         var result;
         var dictionary = {};
         var context = canvas.getContext('2d');
         var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
 
-        for (i = 0; i < imageData.length; i+=4) {
+        for (i = 0; i < imageData.length; i+=40) {
             var red = imageData[i];
             var green = imageData[i+1];
             var blue = imageData[i+2];
@@ -170,7 +187,6 @@
             }
         });
 
-        debugger;
         return result;
     }
 
@@ -183,6 +199,17 @@
         return componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
 
+
+    function appendDominantColor(dominantColor) {
+        var colorcanvas = document.createElement('canvas');
+        colorcanvas.height = 100;
+        colorcanvas.width = 100;
+
+        var context2d = colorcanvas.getContext('2d');
+        context2d.fillStyle = '#' + dominantColor;
+        context2d.fillRect(0,0,100,100);
+        colorMap.append(colorcanvas);
+    }
 
 </script>
 </body>
