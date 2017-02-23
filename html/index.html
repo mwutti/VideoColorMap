@@ -6,6 +6,7 @@
     <script type="text/javascript" src="../js/jquery-3.1.1.js"></script>
     <script type="text/javascript" src="../js/application.js"></script>
     <script type="text/javascript" src="../js/jcanvas.min.js"></script>
+    <script type="text/javascript" src="../js/color-thief.min.js"></script>
 
     <style type="text/css">
         #colorMapCanvas {
@@ -50,7 +51,9 @@
     var duration; // Länge des Videos
 
     // Eine Map die in der die einzelnen Frames {dominantColor, {canvas}} gespeichert werden.
-    var imageMap = {}
+    var imageMap = {};
+    var nrOfDominantColors = 1;
+    var useColorThief = false;
 
 
     /**
@@ -61,6 +64,10 @@
      */
     inputForm.on('submit', function(event) {
         event.preventDefault();
+
+        //todo Number of dominantColors and colorThief
+        nrOfDominantColors = 64;
+//        useColorThief = true;
 
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
@@ -106,8 +113,34 @@
 
             context.drawImage(videoTag, 0, 0);
 
-            var dominantColor = getDominantColor(imageCanvas);
-            debugger;
+            var dominantColor = getDominantColor(imageCanvas, nrOfDominantColors);
+            if (nrOfDominantColors > 1) {
+                debugger;
+                //Hier wird auf Basis des Abstandes zu den dominantesten Farben noch einmal die Dominante Farbe berechnet
+                if (useColorThief) {
+                    debugger;
+                    var colorThief = new ColorThief();
+
+                    var colorPalleteFromColorThief = colorThief.getPalette(imageCanvas, nrOfDominantColors);
+                    var colorPalleteForDominantColor = [];
+                    $.each(colorPalleteFromColorThief, function(index, value) {
+                        var colorHex = rgbToHex(value[0], value[1], value[2]);
+                        colorPalleteForDominantColor.push(colorHex);
+                    });
+
+                    dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalleteForDominantColor)[0];
+                } else {
+                    var colorPalette = [];
+                    $.each(dominantColor, function() {
+                        colorPalette.push(this[0]);
+                    });
+
+                    dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalette)[0];
+                }
+
+
+            }
+
             if (imageMap[dominantColor] == undefined) {
                 imageMap[dominantColor] = [];
             }
@@ -162,17 +195,16 @@
 
     });
 
-    function getDominantColor(canvas) {
-        var result;
+    function getDominantColor(canvas, nrOfColors) {
         var dictionary = {};
         var context = canvas.getContext('2d');
         var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
 
+        //1-dimensionales Donwsampling jeder 10. Pixel
         for (i = 0; i < imageData.length; i+=40) {
             var red = imageData[i];
             var green = imageData[i+1];
             var blue = imageData[i+2];
-//            var alpha = imageData[i+3];
 
             //integer rep
 //            var rgb = (red << 24) + (green << 16) + (blue << 8) + (alpha);
@@ -185,16 +217,87 @@
             }
         }
 
-        var max = 0;
+        //Nur dominanteste Farbe zurückgeben
+        if (nrOfColors == undefined || nrOfColors == 1) {
+            var result;
+            var max = 0;
 
-        $.each(dictionary, function(key, value) {
-            if (value > max) {
-                max = value;
-                result = key;
+            $.each(dictionary, function(key, value) {
+                if (value > max) {
+                    max = value;
+                    result = key;
+                }
+            });
+            return result;
+        } else {
+            //Mehrere Dominante Farben zurückgeben, dazu werden zuerst die Counter sortiert
+            var sortable = [];
+
+            for (var rgb in dictionary) {
+                sortable.push([rgb, dictionary[rgb]]);
             }
+
+            var sortedByValue = sortable.sort(function(a, b) {
+                return a[1] - b[1]
+            });
+
+            //und danach die n..(nrOfColors) dominantesten Farben zurückgegeben
+            return sortedByValue.slice(Math.max(sortedByValue.length - nrOfColors, 1));
+        }
+    }
+
+    function getDominantColorFromColorPalette(canvas, colorPalette) {
+        //ZielMap
+        var map = {};
+        $.each(colorPalette, function(){
+            map[this] = 0;
         });
 
-        return result;
+        var context = canvas.getContext('2d');
+        var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
+
+        for (i = 0; i < imageData.length; i+=40) {
+            var distances = distancesToColorPalette(imageData, colorPalette);
+
+            var minimumDistance = 99999999999999999999;
+            var minimumDistanceIndex;
+            $.each(distances, function(index, value) {
+                if (value < minimumDistance) {
+                    minimumDistanceIndex = index;
+                }
+            });
+
+            map[minimumDistanceIndex] = map[minimumDistanceIndex] + 1;
+        }
+
+        var sortable = [];
+
+        for (var hex in map) {
+            sortable.push([hex, map[hex]]);
+        }
+
+        var sortedByValue = sortable.sort(function(a, b) {
+            return a[1] - b[1]
+        });
+
+        return sortedByValue[sortedByValue.length - 1];
+    }
+
+    function distancesToColorPalette(imageData, colorPalette) {
+        var pixelRed = imageData[i];
+        var pixelGreen = imageData[i+1];
+        var pixelBlue = imageData[i+2];
+        var distances = [];
+
+        $.each(colorPalette, function() {
+            //Euklidischee Abstand im Raum
+
+            var hexToRgb = rgbFromHex('#' + this);
+            var distance = Math.sqrt(Math.pow(pixelRed - hexToRgb.red,2) + Math.pow(pixelGreen - hexToRgb.green, 2) + Math.pow(pixelBlue - hexToRgb.blue,2));
+            distances.push(distance);
+        });
+
+        return distances;
     }
 
     function componentToHex(c) {
@@ -204,6 +307,15 @@
 
     function rgbToHex(r, g, b) {
         return componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+
+    function rgbFromHex(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            red: parseInt(result[1], 16),
+            green: parseInt(result[2], 16),
+            blue: parseInt(result[3], 16)
+        } : null;
     }
 
 
