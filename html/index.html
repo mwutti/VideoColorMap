@@ -152,6 +152,13 @@
 
         keys.sort();
 
+        //Canvas Elemente in richtiger Reihenfolge in die Color Map werfen
+        $.each(keys, function(index, value) {
+            $.each(imageMap[value], function() {
+                colorMap.append(this);
+                appendDominantColor(value);
+            })
+        })
 
     });
 
