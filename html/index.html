@@ -190,8 +190,16 @@
          * Jedes mal wenn sich ein Frame im Video ändert, wird die Bearbeitung ausgeführt
          **/
         videoTag.addEventListener('seeked', function () {
+            /**
+             * Status der ProgressBar updated
+             **/
+            var progress = parseInt(frameAt/duration*100);
+            $('#container-progress').find('.progress-bar').css('width', progress + "%");
+
+
             var imageCanvas = document.createElement('canvas');
             var context = imageCanvas.getContext('2d');
+
             /**
              * Zuerst wird ein Canvas Element erstellt, das die Originalgröße des Videos hat und  auf dessen Basis
              * die dominante Farbe berechnet wird
@@ -246,6 +254,8 @@
             if (frameAt <= duration) {
                 videoTag.currentTime = frameAt;
             } else {
+                //Progressbar ausblenden
+                progressRow.addClass('hidden');
                 //Frames skallieren
                 $.each(imageMap, function() {
                     var context = this[0].getContext('2d');
