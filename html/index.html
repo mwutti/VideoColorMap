@@ -63,7 +63,7 @@
             <h2>First Select</h2>
         </div>
         <div class="col-md-7 col-md-offset-2 margin">
-            <label for="interval">Interval in seconds between to frames</label><br>
+            <label for="interval">Interval in seconds between to frames*</label><br>
             <input id="interval" data-slider-id='intervall-slider' type="text" data-slider-min="1" data-slider-max="30" data-slider-step="1" data-slider-value="10"/>
         </div>
         <div class="col-md-7 col-md-offset-2 margin">
@@ -84,8 +84,7 @@
         </div>
         <div class="col-md-7 col-md-offset-2 margin">
             <label for="interval">Number of Color-Palette colors (only advanced and ColorThief Mode)*</label><br>
-            <input id="colors" data-slider-id='colors-slider' type="text" data-slider-min="5" data-slider-max="99" data-slider-step="1" data-slider-value="32"/>
-            <br><small>*If the number of colors is too large, memory problems might occur </small>
+            <input id="colors" data-slider-id='colors-slider' type="text" data-slider-min="3" data-slider-max="32" data-slider-step="1" data-slider-value="8"/>
         </div>
         <div class="col-md-7 col-md-offset-2 margin">
             <label for="scale">Scalefactor of the images</label><br>
@@ -100,6 +99,7 @@
             </div>
             <div class="col-md-7 col-md-offset-2">
                 <button type="submit" class="btn btn-primary hidden">Create Color Map</button>
+                <small>*If the number of colors is too large or the interval is to small, memory problems might occur and the processing will stop</small>
             </div>
         </form>
     </div>
