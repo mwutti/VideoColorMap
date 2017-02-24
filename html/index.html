@@ -23,7 +23,11 @@
 
         }
 
-        #intervall-slider .slider-selection {
+        .margin {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        #intervall-slider .slider-selection, #colors-slider .slider-selection{
             background: #BABABA;
         }
     </style>
@@ -56,25 +60,30 @@
         <div class="col-md-7 col-md-offset-2">
             <h2>First Select</h2>
         </div>
-        <div class="col-md-7 col-md-offset-2">
-            <label for="interval">Interval in seconds between to frames</label>
+        <div class="col-md-7 col-md-offset-2 margin">
+            <label for="interval">Interval in seconds between to frames</label><br>
             <input id="interval" data-slider-id='intervall-slider' type="text" data-slider-min="1" data-slider-max="30" data-slider-step="1" data-slider-value="10"/>
         </div>
-        <div class="col-md-7 col-md-offset-2">
+        <div class="col-md-7 col-md-offset-2 margin">
             <label for="crop">Should the images be cropped to squares ?</label>
             <input id=crop type="checkbox" >
         </div>
-        <div class="col-md-7 col-md-offset-2">
+        <div class="col-md-7 col-md-offset-2 margin">
             <label>Choose an algorithm</label>
             <div class="radio">
                 <label><input type="radio" checked name="mode" value="0">Dominant Color (simple)</label>
             </div>
             <div class="radio">
-                <label><input type="radio" name="mode" value="1">Dominant Color (advanced)</label>
+                <label><input type="radio" name="mode" value="1">Dominant Color (advanced / based on Color-Palette)</label>
             </div>
             <div class="radio">
                 <label><input type="radio" name="mode" value="2">Dominant Color Based on <a href="https://github.com/lokesh/color-thief/" target="_blank">ColorThief</a> Color-Palette</label>
             </div>
+        </div>
+        <div class="col-md-7 col-md-offset-2 margin">
+            <label for="interval">Number of Color-Palette colors (only advanced and ColorThief Mode)*</label><br>
+            <input id="colors" data-slider-id='colors-slider' type="text" data-slider-min="5" data-slider-max="99" data-slider-step="1" data-slider-value="32"/>
+            <br><small>*If the number of colors is too large, memory problems might occur </small>
         </div>
         <div class="col-md-7 col-md-offset-2">
             <h2>Now choose a video</h2>
@@ -94,7 +103,6 @@
         <div class="col-md-12">
             <div class="progress">
                 <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width: 1%">
-
                 </div>
             </div>
         </div>
@@ -147,6 +155,7 @@
         interval = parseInt($('#interval').val());
         mode = $('input[name="mode"]:checked').val();
         crop = $('input[id="crop"]:checked').val() != undefined;
+        nrOfDominantColors = parseInt($('#colors').val())
 
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
@@ -448,6 +457,12 @@
 
     $(document).ready(function() {
         $('#interval').slider({
+            formatter: function(value) {
+                return 'Current value: ' + value;
+            }
+        });
+
+        $('#colors').slider({
             formatter: function(value) {
                 return 'Current value: ' + value;
             }
