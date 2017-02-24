@@ -43,7 +43,7 @@
     </div>
 </nav>
 
-<div class="container-fluid">
+<div class="container-fluid" id="container-form">
     <div class="row">
         <div class="col-md-12">
             <div class="page-header">
@@ -57,7 +57,7 @@
         </div>
         <div class="col-md-7 col-md-offset-2">
             <label for="interval">Interval in seconds between to frames</label>
-            <input id="interval" data-slider-id='intervall-slider' type="text" data-slider-min="1" data-slider-max="20" data-slider-step="1" data-slider-value="10"/>
+            <input id="interval" data-slider-id='intervall-slider' type="text" data-slider-min="1" data-slider-max="30" data-slider-step="1" data-slider-value="10"/>
         </div>
         <div class="col-md-7 col-md-offset-2">
             <label for="cropped">Should the images be cropped to squares ?</label>
@@ -66,17 +66,17 @@
         <div class="col-md-7 col-md-offset-2">
             <label>Choose an algorithm</label>
             <div class="radio">
-                <label><input type="radio" checked name="optradio">Dominant Color (simple)</label>
+                <label><input type="radio" checked name="mode" value="0">Dominant Color (simple)</label>
             </div>
             <div class="radio">
-                <label><input type="radio" name="optradio">Dominant Color (advanced)</label>
+                <label><input type="radio" name="mode" value="1">Dominant Color (advanced)</label>
             </div>
             <div class="radio">
-                <label><input type="radio" name="optradio">Dominant Color Based on ColorThief Color Palette</label>
+                <label><input type="radio" name="mode" value="2">Dominant Color Based on ColorThief Color Palette</label>
             </div>
         </div>
         <div class="col-md-7 col-md-offset-2">
-            <h2>Now choose an image</h2>
+            <h2>Now choose a video</h2>
         </div>
         <div class="col-md-7 col-md-offset-2">
             <form id="inputForm">
@@ -110,13 +110,16 @@
     var targetHeight = 200;
 
     var URL = window.URL || window.webkitURL;
-    var interval = 20; // alle 10 Sekunden wird ein Frame aus dem Video entnommen
     var duration; // Länge des Videos
 
     // Eine Map die in der die einzelnen Frames {dominantColor, {canvas}} gespeichert werden.
     var imageMap = {};
+    //Default Settings
+    var interval = 10;
     var nrOfDominantColors = 1;
     var useColorThief = false;
+    var mode = "0";
+    var crop = false;
 
 
     /**
@@ -127,6 +130,9 @@
      */
     inputForm.on('submit', function(event) {
         event.preventDefault();
+        interval = parseInt($('#interval').val());
+        mode = $('input[name="mode"]:checked').val();
+
         debugger;
         //todo Number of dominantColors and colorThief
         nrOfDominantColors = 5;
@@ -414,12 +420,13 @@
     }
 
     $(document).ready(function() {
-        debugger;
         $('#interval').slider({
             formatter: function(value) {
                 return 'Current value: ' + value;
             }
         });
+
+        $('#container-form')
     })
 </script>
 
