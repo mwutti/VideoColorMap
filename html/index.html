@@ -148,10 +148,6 @@
         mode = $('input[name="mode"]:checked').val();
         crop = $('input[id="crop"]:checked').val() != undefined;
 
-
-        nrOfDominantColors = 5;
-        useColorThief = false;
-
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
         var canPlay = videoTag.canPlayType(videoType);
@@ -213,6 +209,7 @@
             /**
              * Entweder wird auf Basis einer Farbpalette von ColorThief die DominanteFarbe berechnet
              */
+            debugger;
             if (mode == 2) {
                 var colorThief = new ColorThief();
 
@@ -224,7 +221,7 @@
                 });
 
                 dominantColor = getDominantColorFromColorPalette(imageCanvas, colorPalleteForDominantColor)[0];
-            } else if (nrOfDominantColors > 1){
+            } else if (mode == 1 && nrOfDominantColors > 1){
                 /**
                  * Oder es wird ein erweiterter Algorithmus verwendet
                  */
