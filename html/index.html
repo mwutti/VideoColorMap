@@ -17,17 +17,19 @@
     <script type="text/javascript" src="../js/application-frontend.js"></script>
 
     <style type="text/css">
-        canvas {
-            width: 500px;
-            height : auto;
+        /*canvas {*/
+            /*width: 500px;*/
+            /*height : auto;*/
 
-        }
+        /*}*/
 
         .margin {
             margin-top: 10px;
             margin-bottom: 10px;
         }
-        #intervall-slider .slider-selection, #colors-slider .slider-selection{
+        #intervall-slider .slider-selection,
+        #scale-slider .slider-selection,
+        #colors-slider .slider-selection {
             background: #BABABA;
         }
     </style>
@@ -66,7 +68,7 @@
         </div>
         <div class="col-md-7 col-md-offset-2 margin">
             <label for="crop">Should the images be cropped to squares ?</label>
-            <input id=crop type="checkbox" >
+            <input id=crop type="checkbox" checked>
         </div>
         <div class="col-md-7 col-md-offset-2 margin">
             <label>Choose an algorithm</label>
@@ -84,6 +86,10 @@
             <label for="interval">Number of Color-Palette colors (only advanced and ColorThief Mode)*</label><br>
             <input id="colors" data-slider-id='colors-slider' type="text" data-slider-min="5" data-slider-max="99" data-slider-step="1" data-slider-value="32"/>
             <br><small>*If the number of colors is too large, memory problems might occur </small>
+        </div>
+        <div class="col-md-7 col-md-offset-2 margin">
+            <label for="scale">Scalefactor of the images</label><br>
+            <input id="scale" data-slider-id='scale-slider' type="text" data-slider-min="0.1" data-slider-max="2.0" data-slider-step="0.1" data-slider-value="0.5"/>
         </div>
         <div class="col-md-7 col-md-offset-2">
             <h2>Now choose a video</h2>
@@ -129,7 +135,9 @@
 
     var videoWidth;
     var videoHeight;
-    var targetHeight = 200;
+    var targetWidth;
+    var targetHeight;
+    var scaleFactor = 0.25;
 
     var URL = window.URL || window.webkitURL;
     var duration; // Länge des Videos
@@ -155,12 +163,13 @@
         interval = parseInt($('#interval').val());
         mode = $('input[name="mode"]:checked').val();
         crop = $('input[id="crop"]:checked').val() != undefined;
-        nrOfDominantColors = parseInt($('#colors').val())
+        nrOfDominantColors = parseInt($('#colors').val());
+
+        scaleFactor = parseFloat($('#scale').val());
 
         var videoFile = inputVideo.files[0];
         var videoType = videoFile.type;
         var canPlay = videoTag.canPlayType(videoType);
-
 
         if (canPlay === '') {
             alert('Unable to play Video. Supported file formats are: MP4, OGG, MebM');
@@ -205,20 +214,29 @@
             var imageCanvas = document.createElement('canvas');
             var context = imageCanvas.getContext('2d');
 
-            /**
-             * Zuerst wird ein Canvas Element erstellt, das die Originalgröße des Videos hat und  auf dessen Basis
-             * die dominante Farbe berechnet wird
-             */
-            imageCanvas.height = videoHeight;
-            imageCanvas.width = videoWidth;
-            imageCanvas.id = 'image' + frameAt;
+            //cropping
+            if (crop) {
+                targetHeight = videoHeight;;
+                targetWidth = videoHeight;
 
-            context.drawImage(videoTag, 0, 0);
+                imageCanvas.height = targetHeight;
+                imageCanvas.width = targetHeight;
+                imageCanvas.id = 'image' + frameAt;
+
+                context.drawImage(videoTag, (videoWidth-targetHeight)/2, 0, targetHeight, targetHeight, 0, 0, targetHeight, targetHeight);
+            } else {
+                imageCanvas.height = videoHeight;
+                imageCanvas.width = videoWidth;
+                targetHeight = videoHeight;
+                targetWidth = videoWidth;
+                imageCanvas.id = 'image' + frameAt;
+
+                context.drawImage(videoTag, 0, 0);
+            }
 
             /**
              * Entweder wird auf Basis einer Farbpalette von ColorThief die DominanteFarbe berechnet
              */
-            debugger;
             if (mode == 2) {
                 var colorThief = new ColorThief();
 
@@ -246,7 +264,7 @@
                 /**
                  * Oder der einfache Algorithmus
                  */
-                var dominantColor = getDominantColor(imageCanvas, nrOfDominantColors);
+                var dominantColor = getDominantColor(imageCanvas, 1);
             }
 
             if (imageMap[dominantColor] == undefined) {
@@ -262,13 +280,6 @@
             } else {
                 //Progressbar ausblenden
                 progressRow.addClass('hidden');
-                //Frames skallieren
-                $.each(imageMap, function() {
-                    var context = this[0].getContext('2d');
-                    context.save();
-                    context.scale(0.5, 0.5);
-                    context.restore();
-                });
 
                 //Gibt das Zeichen, das alle dominanten Farben und Frames vorhanden sind
                 colorMap.trigger("ready");
@@ -295,29 +306,35 @@
                 colorMap.append(this);
 //                appendDominantColor(value);
             })
-        })
+        });
 
         $.each(keys, function(index, value) {
             $.each(imageMap[value], function() {
 //                colorMap.append(this);
                 appendDominantColor(value);
             })
-        })
+        });
+
+        //Endresultate skalieren
+        $('canvas').css({
+            height : "auto",
+            width: targetWidth * scaleFactor
+        });
 
     });
 
     function getDominantColor(canvas, nrOfColors) {
         var dictionary = {};
         var context = canvas.getContext('2d');
-        var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
+        var imageData = context.getImageData(0, 0, targetWidth, targetHeight).data;
 
         //Downsampling jeder 10te pixel horizontal
         for (var i = 0; i < imageData.length; i+=40) {
             // Jeder 10te pixel vertikal
-            if (i % (videoWidth * 4) == 0) {
+            if (i % (targetHeight * 4) == 0) {
                 //Schutz vor Überlauf
-                if (i + videoWidth * 40 < imageData.length) {
-                    i = i + videoWidth * 40;
+                if (i + targetWidth * 40 < imageData.length) {
+                    i = i + targetWidth * 40;
                 }
             }
             var red = imageData[i];
@@ -372,14 +389,14 @@
         });
 
         var context = canvas.getContext('2d');
-        var imageData = context.getImageData(0, 0, videoWidth, videoHeight).data;
+        var imageData = context.getImageData(0, 0, targetWidth, targetHeight).data;
 
         //Mit Downsampling
         for (var i = 0; i < imageData.length; i+=40) {
-            if (i % (videoWidth * 4) == 0) {
+            if (i % (targetWidth * 4) == 0) {
                 //Schutz vor Überlauf
-                if (i + videoWidth * 40 < imageData.length) {
-                    i = i + videoWidth * 40;
+                if (i + targetWidth * 40 < imageData.length) {
+                    i = i + targetWidth * 40;
                 }
             }
             var distances = distancesToColorPalette(imageData, colorPalette, i);
@@ -446,12 +463,12 @@
 
     function appendDominantColor(dominantColor) {
         var colorcanvas = document.createElement('canvas');
-        colorcanvas.height = videoHeight;
-        colorcanvas.width = videoWidth;
+        colorcanvas.height = targetHeight;
+        colorcanvas.width = targetWidth;
 
         var context2d = colorcanvas.getContext('2d');
         context2d.fillStyle = '#' + dominantColor;
-        context2d.fillRect(0,0,videoWidth,videoHeight);
+        context2d.fillRect(0,0,targetWidth,targetHeight);
         dominantColorMap.append(colorcanvas);
     }
 
@@ -463,6 +480,12 @@
         });
 
         $('#colors').slider({
+            formatter: function(value) {
+                return 'Current value: ' + value;
+            }
+        });
+
+        $('#scale').slider({
             formatter: function(value) {
                 return 'Current value: ' + value;
             }
