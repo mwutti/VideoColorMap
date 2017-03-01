@@ -55,6 +55,7 @@
                 <h1 class="text-center">Dominant Color Map</h1>
             </div>
         </div>
+    </div>
 </div>
 
 <div class="container-fluid" id="container-form">
@@ -121,14 +122,13 @@
 </div>
 
 <div class="container-fluid">
-    <div id="dominantColorMap">
-    </div>
+    <canvas id="dominantColor" height="100px"></canvas>
 </div>
 
 <script type="text/javascript">
     var inputForm = $('#inputForm');
     var colorMap = $('#colorMap');
-    var dominantColorMap = $('#dominantColorMap');
+    var colorCanvas = document.querySelector('#dominantColor');
     var inputVideo = document.querySelector('#inputVideo');
     var videoTag = document.querySelector('video');
     var progressRow = $('#progress');
@@ -212,6 +212,7 @@
 
 
             var imageCanvas = document.createElement('canvas');
+            imageCanvas.className += 'frame';
             var context = imageCanvas.getContext('2d');
 
             //cropping
@@ -293,34 +294,35 @@
     colorMap.on('ready', function() {
         //keys sortieren
         var keys = [];
-
         $.each(imageMap, function(key, value) {
             keys.push(key);
         });
 
+        /**
+         * Canvas Elemente in der richtigen Reihenfolge in die ColorMap werfen und Dominant-Color verlauf anzeigen
+         */
         keys.sort();
-
-        //Canvas Elemente in richtiger Reihenfolge in die Color Map werfen
+        colorCanvas.width = keys.length * 3;
+        var offset = 0;
         $.each(keys, function(index, value) {
             $.each(imageMap[value], function() {
                 colorMap.append(this);
-//                appendDominantColor(value);
-            })
-        });
-
-        $.each(keys, function(index, value) {
-            $.each(imageMap[value], function() {
-//                colorMap.append(this);
-                appendDominantColor(value);
+                appendDominantColor(value, index + offset);
+                offset += 2;
             })
         });
 
         //Endresultate skalieren
-        $('canvas').css({
+        $('.frame').css({
             height : "auto",
             width: targetWidth * scaleFactor
         });
 
+        //Color canvas skalieren
+        $('#dominantColor').css({
+            width: "100%",
+            height: "100px"
+        });
     });
 
     function getDominantColor(canvas, nrOfColors) {
@@ -461,15 +463,17 @@
     }
 
 
-    function appendDominantColor(dominantColor) {
-        var colorcanvas = document.createElement('canvas');
-        colorcanvas.height = targetHeight;
-        colorcanvas.width = targetWidth;
+    function appendDominantColor(dominantColor, index) {
+        debugger;
+        var ctx = colorCanvas.getContext("2d");
+        ctx.beginPath();
+        ctx.moveTo(index + 1, 0);
+        ctx.strokeStyle = '#' + dominantColor;
+        ctx.lineWidth = 1;
+        ctx.lineTo(index + 1, colorCanvas.height);
+        ctx.stroke();
+        ctx.closePath();
 
-        var context2d = colorcanvas.getContext('2d');
-        context2d.fillStyle = '#' + dominantColor;
-        context2d.fillRect(0,0,targetWidth,targetHeight);
-        dominantColorMap.append(colorcanvas);
     }
 
     $(document).ready(function() {
