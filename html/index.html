@@ -43,7 +43,7 @@
     <div class="container-fluid">
         <div class="navbar-header">
             <a class="navbar-brand" href="#">
-                DominantColorMap
+                Video Color Map
             </a>
         </div>
     </div>
@@ -52,7 +52,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="page-header">
-                <h1 class="text-center">Dominant Color Map</h1>
+                <h1 class="text-center">Video Color Map</h1>
             </div>
         </div>
     </div>
@@ -121,7 +121,8 @@
     </div>
 </div>
 
-<div class="container-fluid">
+<div class="container-fluid hidden" id="dominant-color-bar">
+    <h1 class="text-center">Dominant Color Bar</h1>
     <canvas id="dominantColor" height="100px"></canvas>
 </div>
 
@@ -323,6 +324,7 @@
             width: "100%",
             height: "100px"
         });
+        $('#dominant-color-bar').removeClass('hidden');
     });
 
     function getDominantColor(canvas, nrOfColors) {
@@ -501,6 +503,9 @@
             $('button[type="submit"]').removeClass('hidden');
         });
 
+        $(".navbar-brand").on('click', function() {
+            location.reload();
+        })
     })
 </script>
 
